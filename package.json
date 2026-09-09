@@ -1,0 +1,18 @@
+{
+  "name": "antigravity-coms-net",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Antigravity CLI integration for coms-net multi-agent mesh",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test --experimental-strip-types tests/unit/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.13.9",
+    "typescript": "^5.7.3"
+  }
+}
