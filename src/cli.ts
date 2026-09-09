@@ -119,6 +119,28 @@ export function parseCliArgs(args: string[] = process.argv.slice(2)): BridgeCliA
     allowPositionals: false,
   });
 
+  let maxTurns: number | undefined;
+  if (values["max-turns"] !== undefined) {
+    const val = parseInt(values["max-turns"], 10);
+    if (isNaN(val) || val <= 0) {
+      throw new Error(
+        `Invalid --max-turns value '${values["max-turns"]}': must be a positive integer`
+      );
+    }
+    maxTurns = val;
+  }
+
+  let heartbeatMs: number | undefined;
+  if (values["heartbeat-ms"] !== undefined) {
+    const val = parseInt(values["heartbeat-ms"], 10);
+    if (isNaN(val) || val <= 0) {
+      throw new Error(
+        `Invalid --heartbeat-ms value '${values["heartbeat-ms"]}': must be a positive integer`
+      );
+    }
+    heartbeatMs = val;
+  }
+
   return {
     project: values.project,
     serverUrl: values["server-url"],
@@ -129,8 +151,8 @@ export function parseCliArgs(args: string[] = process.argv.slice(2)): BridgeCliA
     mock: values.mock ?? false,
     mockResponse: values["mock-response"],
     cwd: values.cwd,
-    maxTurns: values["max-turns"] ? parseInt(values["max-turns"], 10) : undefined,
-    heartbeatMs: values["heartbeat-ms"] ? parseInt(values["heartbeat-ms"], 10) : undefined,
+    maxTurns,
+    heartbeatMs,
     explicit: values.explicit ?? false,
     help: values.help ?? false,
     version: values.version ?? false,

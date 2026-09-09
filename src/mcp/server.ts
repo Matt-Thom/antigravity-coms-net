@@ -173,7 +173,12 @@ export class McpServer {
     // Preset dependencies (useful in unit testing)
     if (options.client) this.client = options.client;
     if (options.tools) this.tools = options.tools;
-    if (options.lifecycle) this.lifecycle = options.lifecycle;
+    if (options.lifecycle) {
+      this.lifecycle = options.lifecycle;
+      this.lifecycle.on("error", (err) => {
+        console.error("[coms-net-mcp] Lifecycle error:", err);
+      });
+    }
   }
 
   public async start(): Promise<void> {
@@ -456,6 +461,10 @@ export class McpServer {
         explicit: true,
         heartbeatIntervalMs: 10_000,
         autoInstallSignalHandlers: false,
+      });
+
+      lifecycle.on("error", (err) => {
+        console.error("[coms-net-mcp] Lifecycle error:", err);
       });
 
       try {

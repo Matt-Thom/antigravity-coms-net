@@ -67,6 +67,36 @@ describe("CLI Tooling & Distribution Tests", () => {
       assert.strictEqual(parseCliArgs(["-v"]).version, true);
       assert.strictEqual(parseCliArgs(["--version"]).version, true);
     });
+
+    it("should reject invalid, non-numeric, or non-positive --max-turns", () => {
+      assert.throws(
+        () => parseCliArgs(["--max-turns", "abc"]),
+        /must be a positive integer/
+      );
+      assert.throws(
+        () => parseCliArgs(["--max-turns", "0"]),
+        /must be a positive integer/
+      );
+      assert.throws(
+        () => parseCliArgs(["--max-turns=-5"]),
+        /must be a positive integer/
+      );
+    });
+
+    it("should reject invalid, non-numeric, or non-positive --heartbeat-ms", () => {
+      assert.throws(
+        () => parseCliArgs(["--heartbeat-ms", "xyz"]),
+        /must be a positive integer/
+      );
+      assert.throws(
+        () => parseCliArgs(["--heartbeat-ms", "0"]),
+        /must be a positive integer/
+      );
+      assert.throws(
+        () => parseCliArgs(["--heartbeat-ms=-100"]),
+        /must be a positive integer/
+      );
+    });
   });
 
   describe("Help & Version Strings", () => {
