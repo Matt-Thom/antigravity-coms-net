@@ -1,0 +1,7 @@
+{
+  "name": "coms-net",
+  "version": "0.1.0",
+  "description": "Antigravity CLI integration for the coms-net multi-agent mesh network",
+  "author": "Antigravity Team",
+  "disabled": false
+}

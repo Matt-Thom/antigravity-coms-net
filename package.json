@@ -5,14 +5,27 @@
   "description": "Antigravity CLI integration for coms-net multi-agent mesh",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "coms-net-bridge": "./bin/coms-net-bridge.js",
+    "coms-net-mcp": "./bin/coms-net-mcp.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    ".agents/plugins"
+  ],
   "scripts": {
     "build": "tsc",
+    "bridge": "tsx src/cli.ts",
+    "mcp": "tsx src/mcp/server.ts",
+    "validate:plugin": "agy plugin validate .agents/plugins/coms-net",
     "test": "node --test --experimental-strip-types tests/unit/*.test.ts tests/integration/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.13.9",
+    "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }
 }

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "coms-net": {
+      "command": "node",
+      "args": ["${workspaceFolder}/dist/mcp/server.js"],
+      "env": {
+        "COMS_NET_PROJECT": "default"
+      },
+      "disabled": false
+    }
+  }
+}

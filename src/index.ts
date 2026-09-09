@@ -13,3 +13,4 @@ export * from "./bridge/lifecycle.ts";
 export * from "./bridge/sse.ts";
 export * from "./bridge/turn-executor.ts";
 export * from "./bridge/daemon.ts";
+export * from "./mcp/server.ts";
