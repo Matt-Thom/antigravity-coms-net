@@ -7,7 +7,7 @@
 
 // ── Literal Unions ──────────────────────────────────────────────────────────
 
-export type AgentStatus = "online" | "stale" | "offline";
+export type AgentStatus = "online" | "stale" | "offline" | "active" | "busy" | "idle";
 export type MessageStatus = "queued" | "delivered" | "complete" | "error" | "timeout";
 export type DisconnectReason = "shutdown" | "stale" | "connection_closed";
 
@@ -73,6 +73,7 @@ export interface AgentCard {
   context_used_pct: number;  // Current context window usage (0-100)
   queue_depth: number;       // Pending inbound prompt queue depth
   status: AgentStatus;       // "online" | "stale" | "offline"
+  runtime?: string;          // Runtime environment identifier ("antigravity")
   last_seen_at?: number;     // Millisecond timestamp of last heartbeat
 }
 
@@ -100,6 +101,7 @@ export interface RegisterRequest {
   color?: string;
   cwd?: string;
   explicit?: boolean;
+  runtime?: string;
 }
 
 export interface RegisterResponse {
@@ -374,6 +376,15 @@ export interface InboundPromptEvent {
 export interface TurnExecutionResult {
   response: string;
   error?: string;
+  conversation_id?: string;
+  duration_seconds?: number;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+    thinking_tokens?: number;
+    cache_read_tokens?: number;
+    total_tokens?: number;
+  };
 }
 
 export interface ITurnExecutor {

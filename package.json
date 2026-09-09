@@ -7,7 +7,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "test": "node --test --experimental-strip-types tests/unit/*.test.ts",
+    "test": "node --test --experimental-strip-types tests/unit/*.test.ts tests/integration/*.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {},
