@@ -4,7 +4,7 @@
 [![Antigravity CLI](https://img.shields.io/badge/Antigravity_CLI-≥1.1.28-blue.svg)](https://github.com/google/antigravity)
 [![Zero Dependencies](https://img.shields.io/badge/Runtime_Dependencies-0-success.svg)](#zero-runtime-dependency-architecture)
 [![License](https://img.shields.io/badge/License-MIT-purple.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-143_Passing-brightgreen.svg)](#testing)
+[![Tests](https://img.shields.io/badge/Tests-293_Passing-brightgreen.svg)](#testing)
 
 **Antigravity Coms-Net** is the official Antigravity CLI (`agy`) integration for the **coms-net multi-agent mesh network**. It enables Antigravity agents to join decentralized agent pools, discover active peers, send structured cross-agent prompts, await peer responses, and autonomously execute inbound turns dispatched by [Pi agents](https://github.com/mariozechner/pi-coding-agent) or peer Antigravity agents.
 
@@ -20,6 +20,7 @@
   - [1. Connect via Antigravity Plugin (Recommended)](#1-connect-via-antigravity-plugin-recommended)
   - [2. Register MCP Server Manually (`agy mcp add`)](#2-register-mcp-server-manually-agy-mcp-add)
   - [3. Run the Autonomous Bridge Daemon](#3-run-the-autonomous-bridge-daemon)
+  - [4. End-to-End Walkthrough (3-Terminal Setup)](#4-end-to-end-walkthrough-3-terminal-setup)
 - [CLI Reference: `coms-net-bridge`](#cli-reference-coms-net-bridge)
 - [MCP Tools Reference](#mcp-tools-reference)
   - [`coms_net_list`](#1-coms_net_list)
@@ -31,6 +32,7 @@
   - [Scenario B: Heterogeneous Multi-Agent Mesh Collaboration](#scenario-b-heterogeneous-multi-agent-mesh-collaboration)
 - [Security & Anti-Looping Discipline](#security--anti-looping-discipline)
 - [Testing](#testing)
+- [Documentation](#documentation)
 - [License](#license)
 
 ---
@@ -91,39 +93,79 @@ Every subsystem is engineered directly on native Node.js 22 built-ins:
 
 ## Prerequisites & Environment
 
-1. **Node.js**: Version **>= 22.13.0** (supports native `--experimental-strip-types` and built-in `fetch`).
-2. **Antigravity CLI**: Version **>= 1.1.28** installed and available in `$PATH`:
+Before getting started, ensure your environment meets the following requirements:
+
+1. **Node.js**: Version **>= 22.13.0** (required for native `--experimental-strip-types` and global `fetch`):
+   ```bash
+   node --version
+   ```
+2. **Antigravity CLI**: Version **>= 1.1.28** installed and accessible in `$PATH`:
    ```bash
    agy --version
    ```
-3. **Running Coms-Net Hub**: A local or remote hub server. If using the reference Bun hub:
-   ```bash
-   # From ~/Code/pi-coms-net
-   bun scripts/coms-net-server.ts
-   # Hub will write ~/.pi/coms-net/projects/default/server.json and server.secret.json
-   ```
+3. **Coms-Net Hub**: A local or remote hub server. You can connect using any of the three approaches:
+   - **Option A: Local Reference Hub (Bun)**:
+     If using the reference hub implementation from `pi-coms-net`:
+     ```bash
+     cd ~/Code/pi-coms-net
+     bun scripts/coms-net-server.ts
+     ```
+     The hub automatically writes `~/.pi/coms-net/projects/default/server.json` and `server.secret.json`. Ensure the secret file has strict POSIX `0600` permissions:
+     ```bash
+     chmod 600 ~/.pi/coms-net/projects/default/server.secret.json
+     ```
+   - **Option B: Remote or Custom Hub (Environment Variables)**:
+     Connect directly without filesystem discovery by setting:
+     ```bash
+     export PI_COMS_NET_SERVER_URL="http://127.0.0.1:34567"
+     export PI_COMS_NET_AUTH_TOKEN="your-secret-bearer-token"
+     export PI_COMS_NET_PROJECT="default"
+     ```
+   - **Option C: Hermetic Mock Mode (No Hub Required)**:
+     For fast local evaluation, CI testing, or offline development, run the bridge with `--mock` (bypasses network hub calls).
 
 ---
 
 ## Installation
 
-Clone the repository and build the TypeScript binaries:
+Follow these step-by-step instructions to clone, build, and verify the package:
 
+### Step 1: Clone the Repository
 ```bash
-cd ~/Code/antigravity-coms-net
+git clone git@github.com:Matt-Thom/antigravity-coms-net.git
+cd antigravity-coms-net
+```
 
-# Install development toolchain (TypeScript, Node typings)
+### Step 2: Install Development Dependencies
+Install TypeScript and development typings (production runtime dependencies are 0):
+```bash
 npm install
+```
 
-# Compile TypeScript to dist/
+### Step 3: Build the TypeScript Binaries
+Compile the TypeScript source code to `dist/`:
+```bash
 npm run build
 ```
 
-The compiled binaries are placed in `dist/` and exposed via executable wrapper scripts in `bin/`:
-- `bin/coms-net-bridge.js`: Bridge daemon entrypoint.
-- `bin/coms-net-mcp.js`: Stdio MCP server entrypoint.
+This compiles:
+- `dist/index.js`: Library API exports
+- `dist/cli.js`: Bridge daemon entrypoint
+- `dist/mcp/server.js`: Stdio Model Context Protocol (MCP) server
+- `dist/protocol/` & `dist/bridge/`: Core client, SSE parser, and turn execution modules
 
-Optionally, link the binaries globally to your PATH:
+The build outputs are exposed via executable wrapper scripts in `bin/`:
+- `bin/coms-net-bridge.js`: Bridge daemon executable wrapper
+- `bin/coms-net-mcp.js`: Stdio MCP server executable wrapper
+
+### Step 4: Verify the Installation
+Run the complete test suite (293 tests across 63 suites):
+```bash
+npm test
+```
+
+### Step 5: (Optional) Link Binaries Globally
+Link the CLI tools to your system `$PATH` so `coms-net-bridge` and `coms-net-mcp` are available anywhere:
 ```bash
 npm link
 ```
@@ -132,12 +174,22 @@ npm link
 
 ## Quickstart Guide
 
+Choose the integration pathway that best fits your workflow:
+
 ### 1. Connect via Antigravity Plugin (Recommended)
 
-The cleanest way to use coms-net in Antigravity CLI sessions is via the bundled plugin in `.agents/plugins/coms-net/`. It automatically registers the MCP server, collaboration rules, and skills.
+The cleanest way to use coms-net in Antigravity CLI sessions is via the bundled plugin in `.agents/plugins/coms-net/`. It automatically registers the MCP server, collaboration rules (`AGENTS.md`), and skills (`coms-net-collab`).
 
-Verify the plugin manifest and configuration:
+#### Step 1: Ensure the Project is Built
 ```bash
+npm run build
+```
+
+#### Step 2: Validate the Plugin Manifest
+Verify the plugin configuration with the Antigravity CLI:
+```bash
+npm run validate:plugin
+# Or directly:
 agy plugin validate .agents/plugins/coms-net
 ```
 
@@ -151,16 +203,24 @@ Expected output:
           - hooks       : skipped (not found)
 ```
 
-To enable the plugin for your workspace, ensure your `.agents/` directory points to the plugin, or install it:
-```bash
-agy plugin install .agents/plugins/coms-net
-```
+#### Step 3: Enable the Plugin
+- **Within this repository**: When running `agy` from within `antigravity-coms-net`, Antigravity automatically discovers and loads `.agents/plugins/coms-net/` from the repository root.
+- **Across other projects / globally**: Install the plugin into your global Antigravity configuration:
+  ```bash
+  agy plugin install .agents/plugins/coms-net
+  ```
 
-Start an interactive Antigravity session:
+#### Step 4: Launch Antigravity Session
+Start an interactive Antigravity CLI session:
 ```bash
 agy
 ```
-The four tools (`coms_net_list`, `coms_net_send`, `coms_net_get`, `coms_net_await`) are now loaded in the agent's context.
+
+#### Step 5: Verify Tool Availability
+The four tools (`coms_net_list`, `coms_net_send`, `coms_net_get`, `coms_net_await`) are loaded in your session. Verify by prompting the agent:
+```text
+Check what agents are active on the coms-net hub.
+```
 
 ---
 
@@ -168,31 +228,61 @@ The four tools (`coms_net_list`, `coms_net_send`, `coms_net_get`, `coms_net_awai
 
 If you prefer registering the MCP server directly into your global or local Antigravity CLI configuration without installing the full plugin bundle:
 
+#### Step 1: Build the Project
 ```bash
-# Add coms-net MCP server using compiled binary
-agy mcp add coms-net node $(pwd)/dist/mcp/server.js
+npm run build
+```
 
-# Or with custom environment overrides (e.g. custom project namespace)
+#### Step 2: Register the Server
+Using the compiled binary:
+```bash
+agy mcp add coms-net node $(pwd)/dist/mcp/server.js
+```
+
+Or using the globally linked binary (if `npm link` was run):
+```bash
+agy mcp add coms-net coms-net-mcp
+```
+
+Or with custom environment overrides (e.g. custom project namespace):
+```bash
 agy mcp add --env COMS_NET_PROJECT=dev-sprint coms-net node $(pwd)/dist/mcp/server.js
 ```
 
-Verify that the MCP server is configured:
+#### Step 3: Verify Registration
+Verify that the MCP server is configured and enabled:
 ```bash
 agy mcp list
+```
+
+#### Step 4: Start Interactive Session
+```bash
+agy
 ```
 
 ---
 
 ### 3. Run the Autonomous Bridge Daemon
 
-To allow **other agents to send prompts to your Antigravity agent**, run the bridge daemon in a dedicated terminal or as a system service. The daemon registers on the hub, maintains the 10-second heartbeat loop, listens to SSE events, and executes inbound turns via headless `agy -p`:
+To allow **other agents (Pi agents or peer Antigravity agents) to send prompts to your Antigravity agent**, run the bridge daemon in a dedicated terminal or as a system service. The daemon registers on the hub, maintains the 10-second heartbeat loop, listens to SSE events, and executes inbound turns via headless `agy -p`:
 
+#### Step 1: Ensure Hub Connectivity
+Ensure your hub is running, or specify your hub URL and Bearer token:
+```bash
+export PI_COMS_NET_SERVER_URL="http://127.0.0.1:34567"
+export PI_COMS_NET_AUTH_TOKEN="your-secret-bearer-token"
+```
+
+#### Step 2: Start the Bridge Daemon
 ```bash
 # Start bridge daemon using hub auto-discovery
 npm run bridge
 
-# Or directly via binary
+# Or directly via binary with custom identity:
 ./bin/coms-net-bridge.js --name agy-worker --purpose "TypeScript architecture and testing specialist"
+
+# Or in hermetic mock mode (for fast local verification without a running hub):
+./bin/coms-net-bridge.js --mock --mock-response "Task completed successfully."
 ```
 
 Console output:
@@ -204,6 +294,44 @@ Console output:
 [bridge] Status: active, CWD: /home/matt/Code/antigravity-coms-net
 [bridge] SSE event stream connected. Listening for inbound prompts...
 ```
+
+---
+
+### 4. End-to-End Walkthrough (3-Terminal Setup)
+
+Follow this end-to-end tutorial to see multi-agent collaboration in action:
+
+| Terminal | Component | Role & Command |
+| :--- | :--- | :--- |
+| **Terminal 1** | **Coms-Net Hub** | Hub server: `bun scripts/coms-net-server.ts` (or remote hub) |
+| **Terminal 2** | **Bridge Daemon (`agy-worker`)** | Responder agent: `./bin/coms-net-bridge.js --name agy-worker --purpose "Testing specialist"` |
+| **Terminal 3** | **Interactive Session (`agy-lead`)** | Initiator session: `agy` |
+
+#### Step 1: Peer Discovery
+In **Terminal 3**, ask your lead agent:
+```text
+User: Check what agents are online on coms-net.
+```
+The agent executes `coms_net_list` and discovers `agy-worker`:
+```text
+1 peer(s):
+● agy-worker (flash-3.7) 0% — Testing specialist
+```
+
+#### Step 2: Task Delegation
+In **Terminal 3**, instruct the agent to delegate work:
+```text
+User: Ask agy-worker to generate unit tests for Crockford Base32 decoding and await the response.
+```
+The lead agent executes:
+1. `coms_net_send(target: "agy-worker", prompt: "Write unit tests for Crockford Base32 decoding.")` -> returns `msg_id: "01J7ABCDEF..."`.
+2. `coms_net_await(msg_id: "01J7ABCDEF...")` -> blocks awaiting response.
+
+#### Step 3: Autonomous Turn Execution
+In **Terminal 2**, `agy-worker` receives the inbound SSE prompt event, autonomously executes headless `agy -p`, and submits the turn output back to the hub.
+
+#### Step 4: Result Synthesis
+In **Terminal 3**, `coms_net_await` unblocks with the completed response, and the lead agent presents the generated test code directly in your session.
 
 ---
 
@@ -400,22 +528,43 @@ DO NOT call coms_net_send to reply; that creates a ping-pong loop.]
 
 The project includes an extensive automated test suite covering unit tests, mock hub integration, and adversarial stress scenarios.
 
-Run the test suite via Node.js native test runner:
+### Running the Full Test Suite
+
+Run all tests via the Node.js 22 native test runner:
 ```bash
 npm test
 ```
 
 Expected output:
 ```text
-ℹ tests 143
-ℹ suites 26
-ℹ pass 143
+ℹ tests 293
+ℹ suites 63
+ℹ pass 293
 ℹ fail 0
 ```
 
-Additional checks:
+### Granular Test Suites
+
+You can run individual test suites for targeted development and debugging:
+
 ```bash
-# Typecheck TypeScript sources
+# Run unit tests (protocol client, error handling, SSE parser, lifecycle)
+npm run test:unit
+
+# Run integration tests against MockHub
+npm run test:integration
+
+# Run adversarial stress tests (network drops, backoff reconnects, MCP stdio stress)
+npm run test:adversarial
+
+# Run end-to-end full turn execution tests
+npm run test:e2e
+```
+
+### Additional Verification Checks
+
+```bash
+# Typecheck TypeScript sources without emitting files
 npm run typecheck
 
 # Validate Antigravity plugin manifest and configuration
@@ -424,6 +573,17 @@ npm run validate:plugin
 
 ---
 
+## Documentation
+
+For in-depth architectural analysis, protocol specifications, and developer guides:
+
+- [**Architecture Guide**](docs/architecture.md) — Detailed breakdown of the zero-dependency native Node 22 architecture, SSE parser, subprocess orchestration, and stdio framing.
+- [**Protocol Specification**](docs/protocol.md) — Comprehensive REST API contracts, SSE event specifications, Crockford Base32 ULID formatting, and anti-looping rules.
+- [**Usage Guide & Tutorials**](docs/usage.md) — Step-by-step tutorials covering multi-agent setups, JSON Schema enforcement, multi-turn dialogues, and error recovery.
+
+---
+
 ## License
 
 MIT © Antigravity Team
+
